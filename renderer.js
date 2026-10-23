@@ -581,6 +581,46 @@
       if (n) onNodeClick(n);
     });
 
+    /* mg-touch-bridge: 移动端把触摸翻译成鼠标事件，并支持双指缩放 */
+    canvas.style.touchAction = 'none';
+    var pinch = null;
+    function touchPoint(t) { return { x: t.clientX, y: t.clientY }; }
+    function fire(type, x, y, target) {
+      var ev = new MouseEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, view: win });
+      (target || canvas).dispatchEvent(ev);
+    }
+    canvas.addEventListener('touchstart', function (ev) {
+      if (ev.touches.length >= 2) {
+        var a = touchPoint(ev.touches[0]), b = touchPoint(ev.touches[1]);
+        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), zoom: view.zoom, cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 };
+        return;
+      }
+      var p = touchPoint(ev.touches[0]);
+      fire('mousedown', p.x, p.y);
+    }, { passive: true });
+    canvas.addEventListener('touchmove', function (ev) {
+      if (pinch && ev.touches.length >= 2) {
+        var a = touchPoint(ev.touches[0]), b = touchPoint(ev.touches[1]);
+        var d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > 1) {
+          var rect = canvas.getBoundingClientRect();
+          var cx = pinch.cx - rect.left, cy = pinch.cy - rect.top;
+          var factor = d / (pinch.d || d);
+          view.zoom = Math.max(0.05, Math.min(3, pinch.zoom * factor));
+          draw();
+        }
+        return;
+      }
+      var p = touchPoint(ev.touches[0]);
+      fire('mousemove', p.x, p.y);
+      ev.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchend', function (ev) {
+      if (pinch && ev.touches.length < 2) { pinch = null; return; }
+      if (ev.touches.length === 0) fire('mouseup', 0, 0, win);
+    }, { passive: true });
+    canvas.addEventListener('touchcancel', function () { pinch = null; fire('mouseup', 0, 0, win); }, { passive: true });
+
     canvas.addEventListener('wheel', function (ev) {
       ev.preventDefault();
       var p = localPos(ev);

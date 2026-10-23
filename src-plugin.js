@@ -10,7 +10,7 @@ const DEFAULT_OPTS = {
   linkLength: 120,
   repulsion: 1200,
   gravity: 0.0013,
-  height: 560,
+  height: (typeof Platform !== 'undefined' && Platform.isMobile) ? 420 : 560,
   imagePrefix: '',
   tagLabel: '体系',
   elementLabel: '元素',
