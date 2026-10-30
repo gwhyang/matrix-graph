@@ -38,6 +38,7 @@
     var visCount = {};          // 当前可见连线数（标签节点用它决定大小）
     var enterAt = new Map();    // nodeId -> 首次出现的时刻（淡入用）
     var seen = new Set();       // 已经出现过（用于外侧圆周入场）
+    var firstDraw = true;
     var settled = false;
     var tagColor = new Map();
     var tagColorByName = new Map();
@@ -128,6 +129,7 @@
 
     function draw() {
       var w = view.w, h = view.h, z = view.zoom;
+      if (!(w > 0) || !(h > 0)) return;
       dbg.total = graph.nodes.length; dbg.drawn = 0; dbg.culled = 0; dbg.bad = 0;
       var maxImg = opts.imageMaxNodes == null ? 220 : opts.imageMaxNodes;
     var mode;
@@ -150,6 +152,7 @@
           if (visIds && !visIds.has(nd0.id)) continue;
           if (seen.has(nd0.id)) { visibleList.push(nd0); continue; }
           seen.add(nd0.id);
+          if (firstDraw) { visibleList.push(nd0); continue; }   // 首帧：只登记，不搬运
           enterAt.set(nd0.id, performance.now());
           var cx0 = 0, cy0 = 0, cnt0 = 0, maxR0 = 140;
           for (var q2 = 0; q2 < visibleList.length; q2++) {
@@ -193,6 +196,8 @@
       var order = graph.nodes.slice().sort(function (m, n) {
         return (m.kind === 'tag' ? 1 : 0) - (n.kind === 'tag' ? 1 : 0);
       });
+
+      firstDraw = false;
 
       for (var k = 0; k < order.length; k++) {
         var n = order[k];
@@ -614,7 +619,10 @@
       }
     }
     if (!restored) {
-      try { fitToBounds(presolveBounds(), 0.2); } catch (e) { fit(); }
+      // 同步预跑：先算出可看的布局并画出来，之后再交给 rAF 继续动画
+      sim.setAlpha ? sim.setAlpha(1) : sim.reheat(1);
+      for (var pre = 0; pre < 260; pre++) { if (!sim.step()) break; }
+      fit();   // 已同步解算完，直接按真实布局框选
       draw();
       kick();
     }
@@ -637,6 +645,10 @@
       },
       redraw: draw,
       viewState: function () { return { zoom: view.zoom, x: view.x, y: view.y }; },
+      stepFrames: function (n) {
+        for (var i = 0; i < (n || 1); i++) { if (!sim.step()) break; }
+        draw();
+      },
       replaceGraph: replaceGraph,
       setImages: setImages,
       setPalette: function (p2) { Object.assign(palette, p2 || {}); draw(); },
