@@ -2,6 +2,8 @@
 
 Turn a plain Markdown table into an interactive force-directed graph inside Obsidian.
 
+![Matrix Graph](./docs/screenshot.png)
+
 Write a matrix (cards × systems, notes × tags, features × modules …), and the plugin renders it as a
 canvas graph: rows become nodes, the table header becomes tag nodes, and cells become the links
 between them. Everything stays in the note — no external data files, no databases.
