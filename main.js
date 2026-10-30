@@ -3204,17 +3204,18 @@ class MatrixTableView extends ItemView {
     this.source = body;
     this.dirty = false;
     if (this.statusEl) this.statusEl.setText('已保存 ' + new Date().toTimeString().slice(0, 8));
-      // 表格里显式写进代码块的选项优先于 ui 覆盖，避免"表格改 3、图还是 2"
+      // 表格写进代码块的选项，同步进 ui 覆盖（不要删除！否则会把「模式」等手动设置抹掉）
       try {
-        const uiKey = this.plugin.cacheKey(this.sourcePath, 0);
-        const ui = (this.plugin.settings.ui || {})[uiKey];
-        if (ui) {
-          let changed = false;
-          Object.keys(this.model.options).forEach((k) => {
-            if (ui[k] !== undefined) { delete ui[k]; changed = true; }
-          });
-          if (changed) await this.plugin.saveSettings();
-        }
+        const uiKey = this.plugin.cacheKey(this.sourcePath);
+        const store = this.plugin.settings.ui = this.plugin.settings.ui || {};
+        const ui = store[uiKey] || (store[uiKey] = {});
+        let changed = false;
+        Object.keys(this.model.options).forEach((k) => {
+          const raw = this.model.options[k];
+          const num = (raw !== '' && isFinite(Number(raw))) ? Number(raw) : raw;
+          if (ui[k] !== num) { ui[k] = num; changed = true; }
+        });
+        if (changed) await this.plugin.saveSettings();
       } catch (e) { }
 
       if (this.plugin.broadcastMatrixUpdate) this.plugin.broadcastMatrixUpdate(this.sourcePath, body);
