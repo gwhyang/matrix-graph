@@ -27,8 +27,10 @@ const DEFAULT_OPTS = {
   attraction: 0.7
 };
 
-function cssVar(name, fallback) {
-  const v = getComputedStyle(document.body).getPropertyValue(name);
+function cssVar(name, fallback, doc) {
+  const d = doc || document;
+  const body = d.body || document.body;
+  const v = getComputedStyle(body).getPropertyValue(name);
   return (v && v.trim()) || fallback;
 }
 
@@ -222,12 +224,13 @@ class MatrixGraphMount {
     };
     const info = root.createDiv({ cls: 'matrix-graph-canvas-wrap' });
 
+    const ownDoc = (this.containerEl && this.containerEl.ownerDocument) || document;
     this.palette = {
-      bg: cssVar('--background-primary', '#ffffff'),
-      text: cssVar('--text-normal', '#333333'),
-      edge: cssVar('--background-modifier-border', 'rgba(120,130,150,.45)'),
-      accent: cssVar('--interactive-accent', '#6b8afd'),
-      muted: cssVar('--text-faint', '#8892a0')
+      bg: cssVar('--background-primary', '#ffffff', ownDoc),
+      text: cssVar('--text-normal', '#333333', ownDoc),
+      edge: cssVar('--background-modifier-border', 'rgba(120,130,150,.45)', ownDoc),
+      accent: cssVar('--interactive-accent', '#6b8afd', ownDoc),
+      muted: cssVar('--text-faint', '#8892a0', ownDoc)
     };
 
     const cacheKey = this.plugin.cacheKey(this.sourcePath, this.source);
@@ -345,12 +348,13 @@ class MatrixGraphMount {
 
     // 跟随 Obsidian 主题：暗色/亮色切换时重读 CSS 变量
     const refreshPalette = () => {
+      const d2 = (this.containerEl && this.containerEl.ownerDocument) || document;
       const p2 = {
-        bg: cssVar('--background-primary', '#ffffff'),
-        text: cssVar('--text-normal', '#333333'),
-        edge: cssVar('--background-modifier-border', 'rgba(120,130,150,.45)'),
-        accent: cssVar('--interactive-accent', '#6b8afd'),
-        muted: cssVar('--text-faint', '#8892a0')
+        bg: cssVar('--background-primary', '#ffffff', d2),
+        text: cssVar('--text-normal', '#333333', d2),
+        edge: cssVar('--background-modifier-border', 'rgba(120,130,150,.45)', d2),
+        accent: cssVar('--interactive-accent', '#6b8afd', d2),
+        muted: cssVar('--text-faint', '#8892a0', d2)
       };
       Object.assign(this.palette, p2);
       if (this.renderer && this.renderer.setPalette) this.renderer.setPalette(p2);

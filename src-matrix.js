@@ -46,6 +46,7 @@ function isTruthyCell(raw) {
 
 function buildMatrixTable(container, model, hooks) {
   hooks = hooks || {};
+  const doc = container.ownerDocument || document;      // 弹出窗口里是那个窗口的 document
   const onChange = hooks.onChange || function () { };
   // 选区在重建之间保持（否则每点一次格子选区就没了）
   const sel = (container.__mgSel && container.__mgSel.anchor) ? container.__mgSel : { anchor: null, focus: null };
@@ -98,32 +99,32 @@ function buildMatrixTable(container, model, hooks) {
       }
     };
     const onUp = (e2) => {
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
+      doc.removeEventListener('pointermove', onMove);
+      doc.removeEventListener('pointerup', onUp);
       if (!started && onTap) onTap(e2);
     };
-    document.addEventListener('pointermove', onMove);
-    document.addEventListener('pointerup', onUp);
+    doc.addEventListener('pointermove', onMove);
+    doc.addEventListener('pointerup', onUp);
   }
 
   function beginDrag(ev, type, index) {
     if (drag) return;
     if (!ev || !ev.clientX) ev = { clientX: 0, clientY: 0 };
     drag = { type, index };
-    ghost = document.createElement('div');
+    ghost = doc.createElement('div');
     ghost.className = 'mg-drag-ghost';
     ghost.textContent = type === 'row' ? model.rows[index].name : model.tags[index];
-    document.body.appendChild(ghost);
+    doc.body.appendChild(ghost);
     moveGhost(ev);
-    document.addEventListener('pointermove', onDragMove);
-    document.addEventListener('pointerup', onDragEnd, { once: true });
-    document.body.classList.add('mg-dragging');
+    doc.addEventListener('pointermove', onDragMove);
+    doc.addEventListener('pointerup', onDragEnd, { once: true });
+    doc.body.classList.add('mg-dragging');
   }
   function moveGhost(ev) { if (ghost) { ghost.style.left = ev.clientX + 12 + 'px'; ghost.style.top = ev.clientY + 12 + 'px'; } }
   function onDragMove(ev) {
     if (!drag) return;
     moveGhost(ev); clearDropMark();
-    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    const el = doc.elementFromPoint(ev.clientX, ev.clientY);
     if (!el) return;
     if (drag.type === 'row') {
       const tr = el.closest('tr.mg-tr'); if (!tr) return;
@@ -136,13 +137,13 @@ function buildMatrixTable(container, model, hooks) {
     }
   }
   function onDragEnd(ev) {
-    document.removeEventListener('pointermove', onDragMove);
+    doc.removeEventListener('pointermove', onDragMove);
     clearDropMark();
     if (ghost) { ghost.remove(); ghost = null; }
-    document.body.classList.remove('mg-dragging');
+    doc.body.classList.remove('mg-dragging');
     if (!drag) return;
     const d = drag; drag = null;
-    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    const el = doc.elementFromPoint(ev.clientX, ev.clientY);
     if (!el) return;
     if (d.type === 'row') {
       const tr = el.closest('tr.mg-tr'); if (!tr) return;
@@ -246,13 +247,13 @@ function buildMatrixTable(container, model, hooks) {
       const tblRect = table.getBoundingClientRect();
 
       // 跟手线：鼠标在哪，线就在哪（不受表格重排影响）
-      const guide = document.createElement('div');
+      const guide = doc.createElement('div');
       guide.className = 'mg-col-guide';
       guide.style.left = ev.clientX + 'px';
       guide.style.top = tblRect.top + 'px';
       guide.style.height = tblRect.height + 'px';
-      document.body.appendChild(guide);
-      document.body.classList.add('mg-col-resizing');
+      doc.body.appendChild(guide);
+      doc.body.classList.add('mg-col-resizing');
 
       let pending = null, raf = null;
       const flush = () => {
@@ -267,14 +268,14 @@ function buildMatrixTable(container, model, hooks) {
         if (raf == null) raf = requestAnimationFrame(flush); // 每帧最多改一次宽
       };
       const onUp = () => {
-        document.removeEventListener('pointermove', onMove);
+        doc.removeEventListener('pointermove', onMove);
         if (raf != null) { cancelAnimationFrame(raf); flush(); }
         guide.remove();
-        document.body.classList.remove('mg-col-resizing');
+        doc.body.classList.remove('mg-col-resizing');
         resizing = false;
       };
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp, { once: true });
+      doc.addEventListener('pointermove', onMove);
+      doc.addEventListener('pointerup', onUp, { once: true });
     };
     rz.addEventListener('pointerdown', beginResize);
     rz.addEventListener('dblclick', (ev) => {
@@ -318,7 +319,7 @@ function buildMatrixTable(container, model, hooks) {
     if (!th) return;
     const label = th.querySelector(".mg-th-text");
     if (!label) return;
-    const input = document.createElement("input");
+    const input = doc.createElement("input");
     input.className = "mg-col-input";
     input.value = model.tags[ci] || "";
     label.replaceWith(input);
@@ -379,7 +380,7 @@ function buildMatrixTable(container, model, hooks) {
       startPress(e, 'row', ri, (e2) => selectRow(ri, e2.ctrlKey || e2.metaKey));
     });
     nameTd.addEventListener('dblclick', () => {
-      const input = document.createElement('input');
+      const input = doc.createElement('input');
       input.value = row.name; input.className = 'mg-name-input';
       nameTd.empty(); nameTd.appendChild(input); input.focus(); input.select();
       const commit = () => { row.name = input.value.trim() || row.name; onChange(); render(); };
@@ -418,7 +419,7 @@ function buildMatrixTable(container, model, hooks) {
         paintSelection();
         const onMove = (ev) => {
           if (Math.abs(ev.clientX - sx) > 4 || Math.abs(ev.clientY - sy) > 4) moved = true;
-          const el = document.elementFromPoint(ev.clientX, ev.clientY);
+          const el = doc.elementFromPoint(ev.clientX, ev.clientY);
           const cell = el && el.closest ? el.closest('td.mg-td-cell') : null;
           if (cell) {
             sel.focus = { r: Number(cell.dataset.r), c: Number(cell.dataset.c) };
@@ -426,12 +427,12 @@ function buildMatrixTable(container, model, hooks) {
           }
         };
         const onUp = () => {
-          document.removeEventListener('pointermove', onMove);
+          doc.removeEventListener('pointermove', onMove);
           if (!moved) { row.cells[ci] = !row.cells[ci]; onChange(); render(); }
           else if (hooks.onSelectionChange) hooks.onSelectionChange(sel);
         };
-        document.addEventListener('pointermove', onMove);
-        document.addEventListener('pointerup', onUp, { once: true });
+        doc.addEventListener('pointermove', onMove);
+        doc.addEventListener('pointerup', onUp, { once: true });
         e.preventDefault();
       });
 

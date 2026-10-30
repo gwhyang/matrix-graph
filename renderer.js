@@ -64,9 +64,9 @@
       var rect = holder.getBoundingClientRect();
       var w = Math.max(320, Math.floor(rect.width));
       var h = opts.fill
-        ? Math.max(240, Math.floor(holder.clientHeight || (window.innerHeight * 0.72)))
+        ? Math.max(240, Math.floor(holder.clientHeight || (win.innerHeight * 0.72)))
         : Math.max(240, Math.floor(opts.height || 520));
-      var dpr = window.devicePixelRatio || 1;
+      var dpr = (win.devicePixelRatio || 1);
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       canvas.style.width = w + 'px';
