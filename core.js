@@ -391,14 +391,26 @@
       }
     }
 
+    var MAX_COORD = 20000;
+
+    /* 数值兜底：越界/NaN 直接拉回可视范围，避免整张图跑飞后被写进存档 */
+    function clampNode(n) {
+      if (!isFinite(n.x) || !isFinite(n.y) || Math.abs(n.x) > MAX_COORD || Math.abs(n.y) > MAX_COORD) {
+        n.x = (Math.random() - 0.5) * 400;
+        n.y = (Math.random() - 0.5) * 400;
+        n.vx = 0; n.vy = 0;
+      }
+    }
+
     function integrate() {
       for (var p = 0; p < nodes.length; p++) {
         var a = nodes[p];
-        if (a.fixed) { a.vx = 0; a.vy = 0; continue; }
+        if (a.fixed) { a.vx = 0; a.vy = 0; clampNode(a); continue; }
         a.vx *= (1 - velocityDecay);
         a.vy *= (1 - velocityDecay);
         a.x += a.vx;
         a.y += a.vy;
+        clampNode(a);
       }
     }
 

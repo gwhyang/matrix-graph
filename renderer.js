@@ -166,7 +166,7 @@
             }
           }
           var ang0 = Math.random() * Math.PI * 2;
-          var rad0 = maxR0 * 1.35;
+          var rad0 = Math.min(maxR0 + 160, 1200);   // 固定外扩，绝不指数增长
           nd0.x = cx0 + Math.cos(ang0) * rad0;
           nd0.y = cy0 + Math.sin(ang0) * rad0;
           nd0.vx = 0; nd0.vy = 0;
@@ -595,6 +595,16 @@
     if (cfg.savedLayout) {
       var savedPos = cfg.savedLayout.positions || cfg.savedLayout;
       var anyRestored = false;
+      // 先校验：坐标必须在合理范围内，否则视为损坏存档（旧 bug 写出过 1e11 量级）
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      graph.nodes.forEach(function (n) {
+        var p = savedPos && savedPos[n.id];
+        if (!p || !isFinite(p[0]) || !isFinite(p[1])) return;
+        if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0];
+        if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1];
+      });
+      var span = Math.max(maxX - minX, maxY - minY);
+      if (!isFinite(span) || span > 50000) { savedPos = null; }   // 丢弃损坏坐标
       graph.nodes.forEach(function (n) {
         var p = savedPos && savedPos[n.id];
         if (p && isFinite(p[0]) && isFinite(p[1])) { n.x = p[0]; n.y = p[1]; n.vx = 0; n.vy = 0; anyRestored = true; }
