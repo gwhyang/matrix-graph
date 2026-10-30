@@ -735,7 +735,7 @@ class MatrixTableView extends ItemView {
     if (!m) return;
     const body = serializeMatrixBlock(this.model);
     const updated = text.replace(re, '```matrix-graph\n' + body + '\n```');
-    if (updated !== text) await this.app.vault.modify(file, updated);
+    if (updated !== text) await this.app.vault.process(file, () => updated);
     this.source = body;
     this.dirty = false;
     if (this.statusEl) this.statusEl.setText('已保存 ' + new Date().toTimeString().slice(0, 8));

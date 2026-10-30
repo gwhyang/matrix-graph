@@ -199,7 +199,7 @@ class MatrixGraphSettingTab extends PluginSettingTab {
     containerEl.empty();
     this.previews = [];
 
-    containerEl.createEl('h2', { text: 'Matrix Graph 全局默认参数' });
+    new Setting(containerEl).setName('Matrix Graph 全局默认参数').setHeading();
     containerEl.createEl('p', {
       cls: 'setting-item-description',
       text: '这里改的是所有矩阵块的默认值。任何一个块里手动调过的参数会单独覆盖它（覆盖值存在 data.json 的 ui 段）。右侧小图是当前取值下的示意。'

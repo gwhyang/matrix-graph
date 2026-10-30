@@ -465,7 +465,7 @@ class MatrixGraphMount {
       if (head && stem.toLowerCase().startsWith(head.toLowerCase())) stem = stem.slice(head.length);
       index.set(this.normName(stem), f.path);
     }
-    console.log('matrix-graph: 图片索引', index.size, '条，来自', dir, '，卡片数', all.length);
+    void ('matrix-graph: 图片索引', index.size, '条，来自', dir, '，卡片数', all.length);
     return index;
   }
 
@@ -534,7 +534,7 @@ class MatrixGraphMount {
       if (key2 && !idx.has(key2)) idx.set(key2, f.path);
     }
     this._gIndex = idx;
-    console.log('matrix-graph: 全库图片索引', idx.size, '条 / 文件总数', all.length);
+    void ('matrix-graph: 全库图片索引', idx.size, '条 / 文件总数', all.length);
     return idx;
   }
 
@@ -744,7 +744,7 @@ class MatrixGraphPlugin extends Plugin {
       }, 350);
     }));
 
-    console.log('matrix-graph: loaded');
+    void ('matrix-graph: loaded');
   }
 
   async openView(source, sourcePath, title, extraOpts, blockIndex) {
@@ -769,10 +769,10 @@ class MatrixGraphPlugin extends Plugin {
       ? (this.app.workspace.getActiveFile().parent ? this.app.workspace.getActiveFile().parent.path : '')
       : '';
     let base = '矩阵图谱';
-    let path = (folder ? folder + '/' : '') + base + '.md';
+    let path = normalizePath((folder ? folder + '/' : '') + base + '.md');
     let i = 1;
     while (this.app.vault.getAbstractFileByPath(path)) {
-      path = (folder ? folder + '/' : '') + base + ' ' + (++i) + '.md';
+      path = normalizePath((folder ? folder + '/' : '') + base + ' ' + (++i) + '.md');
     }
     const body = [
       '---',

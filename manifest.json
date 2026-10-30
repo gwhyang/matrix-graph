@@ -1,10 +1,10 @@
 {
-  "id": "matrix-graph",
-  "name": "Matrix Graph",
-  "version": "1.0.0",
-  "minAppVersion": "1.4.0",
-  "description": "Turn a Markdown table into an interactive force-directed graph: rows and columns become nodes, cells become edges. Supports similarity/hub modes, a table editor and growth animation.",
-  "author": "Gwhyang",
-  "authorUrl": "https://github.com/gwhyang",
-  "isDesktopOnly": false
+    "id":  "matrix-graph",
+    "name":  "Matrix Graph",
+    "version":  "1.0.1",
+    "minAppVersion":  "1.4.0",
+    "description":  "Turn a Markdown table into an interactive force-directed graph: rows and columns become nodes, cells become edges. Supports similarity/hub modes, a table editor and growth animation.",
+    "author":  "Gwhyang",
+    "authorUrl":  "https://github.com/gwhyang",
+    "isDesktopOnly":  false
 }
