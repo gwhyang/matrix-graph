@@ -1,9 +1,10 @@
 {
   "id": "matrix-graph",
   "name": "Matrix Graph",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "1.4.0",
-  "description": "把二维矩阵（元素 × 标签）渲染成力导向关系图：支持标签枢纽模式与元素相似模式。",
+  "description": "Turn a Markdown table into an interactive force-directed graph: rows and columns become nodes, cells become edges. Supports similarity/hub modes, a table editor and growth animation.",
   "author": "Gwhyang",
+  "authorUrl": "https://github.com/gwhyang",
   "isDesktopOnly": false
 }
