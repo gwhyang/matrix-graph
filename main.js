@@ -536,6 +536,8 @@ const MatrixRenderer = (function () {
 
   function createRenderer(cfg) {
     var canvas = cfg.canvas;
+    var doc = (canvas && canvas.ownerDocument) || document;
+    var win = (doc && doc.defaultView) || window;
     var ctx = canvas.getContext('2d', { alpha: false });
     var holder = cfg.holder || canvas.parentElement;
     var core = cfg.core;
@@ -985,7 +987,7 @@ const MatrixRenderer = (function () {
     function loop() {
       if (!running) return;
       if (!playing) { raf = null; return; }
-      if (panning) { raf = requestAnimationFrame(loop); return; }   // 平移中冻结物理
+      if (panning) { raf = win.requestAnimationFrame(loop); return; }   // 平移中冻结物理
       if (tlp.on) {
         var elapsed = (performance.now() - tlp.t0) / 1000;
         var next = 1 + Math.floor(tlp.speed * elapsed);
@@ -1006,11 +1008,11 @@ const MatrixRenderer = (function () {
       }
       sim.tick();
       draw();
-      raf = requestAnimationFrame(loop);
+      raf = win.requestAnimationFrame(loop);
     }
 
     function kick() {
-      if (raf == null && running) raf = requestAnimationFrame(loop);
+      if (raf == null && running) raf = win.requestAnimationFrame(loop);
     }
 
     /* ---------- 交互 ---------- */
@@ -1077,7 +1079,7 @@ const MatrixRenderer = (function () {
       }
     });
 
-    window.      window.addEventListener('mouseup', function () {
+    win.addEventListener('mouseup', function () {
         canvas.style.cursor = 'default';
         var draggedNode = (dragging && dragging.node) ? dragging.node : null;
         dragging = null;
@@ -1086,8 +1088,13 @@ const MatrixRenderer = (function () {
         // 纯平移视角不加热模拟，否则松手后整张图会飘
         if (draggedNode) {
           if (!draggedNode.isolated) draggedNode.fixed = false;
-          sim.reheat(0.25);
-          kick();
+          if (sim.setAlpha) sim.setAlpha(0.35); else sim.reheat(0.35);
+          playing = true;
+          running = true;
+          settledOnce = false;
+          autoFitDone = true;
+          if (raf == null) kick();
+          notifyLayout();
         }
       });
 
@@ -1194,7 +1201,7 @@ const MatrixRenderer = (function () {
       setPlaying: function (v) {
         playing = !!v;
         if (playing) { sim.reheat(0.25); kick(); }
-        else if (raf) { cancelAnimationFrame(raf); raf = null; }
+        else if (raf) { win.cancelAnimationFrame(raf); raf = null; }
       },
       setStyle: function (o) { Object.assign(opts, o || {}); draw(); },
       resize: function () { resize(); draw(); },
@@ -1206,8 +1213,8 @@ const MatrixRenderer = (function () {
         autoFitDone = true;
         kick();
       },
-      setRunning: function (v) { running = v; if (v) kick(); else if (raf) { cancelAnimationFrame(raf); raf = null; } },
-      dispose: function () { running = false; if (raf) cancelAnimationFrame(raf); raf = null; },
+      setRunning: function (v) { running = v; if (v) kick(); else if (raf) { win.cancelAnimationFrame(raf); raf = null; } },
+      dispose: function () { running = false; if (raf) win.cancelAnimationFrame(raf); raf = null; },
       positions: function () {
         var o = {};
         graph.nodes.forEach(function (n) { o[n.id] = [Math.round(n.x), Math.round(n.y)]; });
