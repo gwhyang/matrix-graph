@@ -1,0 +1,303 @@
+/* matrix-graph：只做布局约束，颜色/字体/控件全部沿用 Obsidian 核心样式 */
+
+.matrix-graph {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  margin: var(--size-4-2) 0;
+}
+
+.matrix-graph-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-3);
+  padding: var(--size-4-2) var(--size-4-3);
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.matrix-graph-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.matrix-graph-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.matrix-graph-value {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  min-width: 2.5em;
+  font-variant-numeric: tabular-nums;
+}
+
+.matrix-graph-range {
+  width: 96px;
+  accent-color: var(--interactive-accent);
+}
+
+.matrix-graph-buttons {
+  display: inline-flex;
+  gap: var(--size-4-2);
+}
+
+.matrix-graph-btn {
+  font-size: var(--font-ui-smaller);
+  padding: var(--size-2-2) var(--size-4-2);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  background-color: var(--interactive-normal);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: none;
+  height: auto;
+  line-height: 1.4;
+}
+
+.matrix-graph-btn:hover {
+  background-color: var(--interactive-hover);
+}
+
+.matrix-graph-stat {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.matrix-graph-canvas-wrap {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background-color: var(--background-primary);
+}
+
+.matrix-graph-canvas {
+  display: block;
+  width: 100%;
+  cursor: default;
+}
+
+.matrix-graph-error {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-error);
+  padding: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+}
+
+/* 独立视图：撑满可用高度 */
+.matrix-graph-view .matrix-graph {
+  height: 100%;
+  margin: 0;
+}
+
+.matrix-graph-fill {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.matrix-graph-fill .matrix-graph-canvas-wrap {
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+/* 受力 / 外观 折叠面板 */
+.matrix-graph-panel {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+  padding: 0 var(--size-4-3);
+}
+
+.matrix-graph-summary {
+  cursor: pointer;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  padding: var(--size-4-2) 0;
+  user-select: none;
+}
+
+.matrix-graph-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--size-4-2) var(--size-4-4);
+  padding-bottom: var(--size-4-3);
+}
+
+.matrix-graph-field-wide {
+  width: 100%;
+}
+
+.matrix-graph-range-wide {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.matrix-graph-check {
+  margin: 0;
+}
+/* 右上角操作：动画 / 放大 */
+.matrix-graph-actions {
+  display: inline-flex;
+  gap: var(--size-4-2);
+  margin-left: auto;
+}
+
+.matrix-graph-btn-icon {
+  min-width: 56px;
+  text-align: center;
+}
+/* ---------------- 矩阵视图（表格） ---------------- */
+.mg-matrix-view { padding: var(--size-4-4); display: flex; flex-direction: column; gap: var(--size-4-3); height: 100%; }
+
+.mg-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+.mg-stat { font-size: var(--font-ui-smaller); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.mg-status { margin-left: auto; font-size: var(--font-ui-smaller); color: var(--text-faint); }
+
+.mg-meta { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); background: var(--background-secondary); padding: 0 var(--size-4-3); }
+.mg-meta-summary { cursor: pointer; font-size: var(--font-ui-smaller); color: var(--text-muted); padding: var(--size-4-2) 0; }
+.mg-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--size-4-3); padding-bottom: var(--size-4-3); }
+.mg-field { display: flex; flex-direction: column; gap: 4px; }
+.mg-field-label { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.mg-field-input { width: 100%; }
+.mg-field-hint { font-size: var(--font-ui-smaller); color: var(--text-faint); }
+
+.mg-table-holder { flex: 1 1 auto; overflow: auto; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); }
+.mg-table { border-collapse: separate; border-spacing: 0; font-size: var(--font-ui-smaller); width: max-content; }
+
+.mg-th {
+  position: sticky; top: 0; z-index: 3;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-right: 1px solid var(--background-modifier-border);
+  white-space: nowrap;
+  user-select: none;
+}
+.mg-th-corner { left: 0; z-index: 6; overflow: visible; }
+.mg-th-tag { cursor: grab; }
+.mg-th-tag:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.mg-th-tag.is-selected { color: var(--interactive-accent); background: var(--background-modifier-hover); box-shadow: inset 0 -2px 0 var(--interactive-accent); }
+.mg-th-text { pointer-events: none; }
+
+/* 拖拽手柄 */
+.mg-drag-handle {
+  display: inline-block;
+  width: 12px;
+  margin-right: 4px;
+  color: var(--text-faint);
+  cursor: grab;
+  opacity: .45;
+  transition: opacity .1s;
+}
+.mg-th:hover .mg-drag-handle, .mg-td-name:hover .mg-drag-handle, .mg-tr:hover .mg-drag-handle { opacity: 1; color: var(--text-muted); }
+.mg-drag-handle:active { cursor: grabbing; }
+
+.mg-td {
+  padding: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-right: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+}
+.mg-td-name {
+  position: sticky; left: 0; z-index: 2;
+  background: var(--background-primary);
+  cursor: pointer;
+  padding: 4px 8px;
+  max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  user-select: none;
+}
+.mg-tr-alt .mg-td { background: var(--background-primary-alt); }
+.mg-tr:hover .mg-td { background: var(--background-modifier-hover); }
+.mg-tr.is-selected .mg-td { background: var(--background-modifier-hover); }
+.mg-tr.is-selected .mg-td-name { color: var(--interactive-accent); box-shadow: inset 2px 0 0 var(--interactive-accent); }
+.mg-name { pointer-events: none; }
+.mg-name-input { width: 100%; min-width: 160px; }
+
+/* 单元格本身就是对号容器 */
+.mg-td-cell {
+  width: 46px; height: 30px;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  color: transparent;
+  font-size: 15px;
+  line-height: 1;
+  user-select: none;
+  position: relative;
+}
+.mg-td-cell:hover { background: var(--background-modifier-hover); }
+.mg-td-cell:hover::after {
+  content: ''; position: absolute; inset: 2px;
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  pointer-events: none;
+}
+.mg-td-cell.is-on { color: var(--interactive-accent); font-weight: 600; }
+.mg-td-cell.is-on:hover::after { border-color: var(--interactive-accent); }
+.mg-td-cell:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: -2px; }
+.mg-td-cell.is-sel { background: var(--text-selection, rgba(107,107,240,.18)); }
+.mg-td-cell.is-sel.is-on { background: var(--text-selection, rgba(107,107,240,.28)); }
+.mg-tr.is-row-sel .mg-td-name { color: var(--interactive-accent); box-shadow: inset 2px 0 0 var(--interactive-accent); }
+
+/* 列宽拖动：10px 热区 + 始终可见的分隔细线 */
+.mg-th-tag { position: sticky; overflow: visible; }
+.mg-th-text { display: inline-block; max-width: calc(100% - 14px); overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.mg-col-resizer {
+  position: absolute; top: 0; right: -7px; width: 14px; height: 100%;
+  cursor: col-resize; z-index: 20;
+}
+.mg-col-resizer::after {
+  content: ''; position: absolute; left: 4px; top: 22%; height: 56%; width: 1px;
+  background: var(--background-modifier-border);
+}
+.mg-col-resizer:hover::after, body.mg-col-resizing .mg-col-resizer::after { background: var(--interactive-accent); width: 2px; left: 4px; }
+.mg-col-resizer:hover { background: var(--background-modifier-hover); }
+body.mg-col-resizing { cursor: col-resize; }
+
+.mg-image-input { width: 150px; font-size: var(--font-ui-smaller); margin: 2px 6px; }
+
+/* 拖拽视觉 */
+body.mg-dragging { cursor: grabbing; }
+.mg-drag-ghost {
+  position: fixed; z-index: 9999;
+  padding: 3px 8px;
+  background: var(--background-primary);
+  border: 1px solid var(--interactive-accent);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-normal);
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.mg-tr.mg-drop-before .mg-td-name { box-shadow: inset 0 2px 0 var(--interactive-accent); }
+.mg-tr.mg-drop-after .mg-td-name { box-shadow: inset 0 -2px 0 var(--interactive-accent); }
+.mg-th.mg-drop-before { box-shadow: inset 2px 0 0 var(--interactive-accent); }
+.mg-th.mg-drop-after { box-shadow: inset -2px 0 0 var(--interactive-accent); }
+.mg-th-image { position: sticky; overflow: visible; }
+
+/* 拖拽列宽时的跟手线 */
+.mg-col-guide {
+  position: fixed; width: 2px; z-index: 9998;
+  background: var(--interactive-accent);
+  pointer-events: none;
+  transform: translateX(-1px);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
+}
+body.mg-col-resizing { cursor: col-resize; user-select: none; }

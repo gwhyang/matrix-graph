@@ -1,0 +1,9 @@
+{
+  "id": "matrix-graph",
+  "name": "Matrix Graph",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "把二维矩阵（元素 × 标签）渲染成力导向关系图：支持标签枢纽模式与元素相似模式。",
+  "author": "Gwhyang",
+  "isDesktopOnly": false
+}
