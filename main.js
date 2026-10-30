@@ -546,6 +546,9 @@ const MatrixRenderer = (function () {
     // timelapse：按连线顺序逐步生长（对齐 Obsidian 核心图谱的「生长动画」）
     var tlp = { on: false, prog: 0, speed: 0, t0: 0, total: 0 };
     var visIds = null;
+    var visCount = {};          // 当前可见连线数（标签节点用它决定大小）
+    var enterAt = new Map();    // nodeId -> 首次出现的时刻（淡入用）
+    var seen = new Set();       // 已经出现过（用于外侧圆周入场）
     var settled = false;
     var tagColor = new Map();
     var tagColorByName = new Map();
@@ -650,6 +653,39 @@ const MatrixRenderer = (function () {
       ctx.lineWidth = opts.edgeWidth == null ? 1 : opts.edgeWidth;
       ctx.strokeStyle = palette.edge || 'rgba(120,130,150,0.45)';
       var visLinks = activeLinks();
+      // 首次出现的节点：从外侧圆周飞入，并开始淡入
+      (function () {
+        var visibleList = [];
+        for (var q1 = 0; q1 < graph.nodes.length; q1++) {
+          var nd0 = graph.nodes[q1];
+          if (visIds && !visIds.has(nd0.id)) continue;
+          if (seen.has(nd0.id)) { visibleList.push(nd0); continue; }
+          seen.add(nd0.id);
+          enterAt.set(nd0.id, performance.now());
+          var cx0 = 0, cy0 = 0, cnt0 = 0, maxR0 = 140;
+          for (var q2 = 0; q2 < visibleList.length; q2++) {
+            cx0 += visibleList[q2].x; cy0 += visibleList[q2].y; cnt0++;
+          }
+          if (cnt0) {
+            cx0 /= cnt0; cy0 /= cnt0;
+            for (var q3 = 0; q3 < visibleList.length; q3++) {
+              var dd = Math.hypot(visibleList[q3].x - cx0, visibleList[q3].y - cy0);
+              if (dd > maxR0) maxR0 = dd;
+            }
+          }
+          var ang0 = Math.random() * Math.PI * 2;
+          var rad0 = maxR0 * 1.35;
+          nd0.x = cx0 + Math.cos(ang0) * rad0;
+          nd0.y = cy0 + Math.sin(ang0) * rad0;
+          nd0.vx = 0; nd0.vy = 0;
+          visibleList.push(nd0);
+        }
+      })();
+      visCount = {};
+      for (var vi = 0; vi < visLinks.length; vi++) {
+        visCount[visLinks[vi].source] = (visCount[visLinks[vi].source] || 0) + 1;
+        visCount[visLinks[vi].target] = (visCount[visLinks[vi].target] || 0) + 1;
+      }
       visIds = tlp.on ? visibleNodeIds(visLinks) : null;
       ctx.beginPath();
       for (var i = 0; i < visLinks.length; i++) {
@@ -682,13 +718,29 @@ const MatrixRenderer = (function () {
         var p = screen(n);
         if (!isFinite(p.x) || !isFinite(p.y)) { dbg.bad++; continue; }
         var ns = opts.nodeScale == null ? 1 : opts.nodeScale;
-        var cw = (n.kind === 'tag' ? Math.max(150 * z, 46) : Math.max(96 * z * ns, 26 * ns));
-        var ch = (n.kind === 'tag' ? Math.max(34 * z, 15) : Math.max(120 * z * ns, 33 * ns));
+        var tagLinks = (n.kind === 'tag') ? (visCount[n.id] || 0) : 0;
+        var tagBaseW = opts.tagBaseW == null ? 96 : opts.tagBaseW;
+        var tagStepW = opts.tagStepW == null ? 9 : opts.tagStepW;
+        var tagBaseH = opts.tagBaseH == null ? 26 : opts.tagBaseH;
+        var tagStepH = opts.tagStepH == null ? 2.2 : opts.tagStepH;
+        var cw = (n.kind === 'tag')
+          ? Math.max(46, (tagBaseW + tagStepW * tagLinks) * z)
+          : Math.max(96 * z * ns, 26 * ns);
+        var ch = (n.kind === 'tag')
+          ? Math.max(16, (tagBaseH + tagStepH * tagLinks) * z)
+          : Math.max(120 * z * ns, 33 * ns);
+        var fade = 1;
+        var ft0 = enterAt.get(n.id);
+        if (ft0 != null) {
+          var fk = (performance.now() - ft0) / (opts.enterFade == null ? 420 : opts.enterFade);
+          if (fk >= 1) enterAt.delete(n.id); else fade = Math.max(0.05, fk);
+        }
         if (p.x + cw < -20 || p.x - cw > w + 20 || p.y + ch < -20 || p.y - ch > h + 20) { dbg.culled++; continue; }
 
         dbg.drawn++;
         var dim = focus && !focus.has(n.id);
-        ctx.globalAlpha = dim ? 0.42 : 1;
+        var tagTextColor = palette.bg || '#ffffff';
+        ctx.globalAlpha = (dim ? 0.42 : 1) * fade;
 
         if (n.kind === 'tag') {
           ctx.fillStyle = tagColor.get(n.id) || COLORS[0];
@@ -710,7 +762,7 @@ const MatrixRenderer = (function () {
           if (mode === 'image') {
             roundRect(ctx, p.x - cw / 2, p.y - ch / 2, cw, ch, 4);
             ctx.fill();
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = tagTextColor;
             ctx.font = Math.max(8, 11 * z) + 'px sans-serif';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(String(n.label).slice(0, 2), p.x, p.y);
@@ -719,6 +771,15 @@ const MatrixRenderer = (function () {
             ctx.arc(p.x, p.y, Math.max(2.5, 7 * z), 0, 6.2832);
             ctx.fill();
           }
+        }
+
+        if (fade < 1) {
+          ctx.save();
+          ctx.globalAlpha = (1 - fade) * 0.92;
+          ctx.fillStyle = palette.bg || '#ffffff';
+          roundRect(ctx, p.x - cw / 2, p.y - ch / 2, cw, ch, n.kind === 'tag' ? 6 : 4);
+          ctx.fill();
+          ctx.restore();
         }
 
         if (n === hover) {
@@ -767,7 +828,10 @@ const MatrixRenderer = (function () {
     }
 
     /* 重新开始的动画：回到中心 -> 加热 -> 让循环自己炸开 */
+    function clearEntry() { seen.clear(); enterAt.clear(); }
+
     function playAnimation() {
+      clearEntry();
       resetPositions();
       sim = core.createSim(graph.nodes, graph.links, opts);
       sim.reheat(1);
@@ -808,6 +872,7 @@ const MatrixRenderer = (function () {
     function playTimelapse() {
       tlp.total = graph.links.length;
       if (!tlp.total) return;
+      clearEntry();
       tlp.on = true;
       tlp.prog = 1;
       tlp.speed = Math.min(100, Math.max(5, 0.5 * Math.sqrt(tlp.total)));
@@ -1085,6 +1150,7 @@ const MatrixRenderer = (function () {
       viewState: function () { return { zoom: view.zoom, x: view.x, y: view.y }; },
       replaceGraph: replaceGraph,
       setImages: setImages,
+      setPalette: function (p2) { Object.assign(palette, p2 || {}); draw(); },
       playAnimation: playAnimation,
       playTimelapse: playTimelapse,
       stopTimelapse: stopTimelapse,
@@ -1476,6 +1542,23 @@ class MatrixGraphMount {
       this.plugin.openView(this.source, this.sourcePath, this.opts.tagLabel + ' × ' + this.opts.elementLabel, this.opts);
     });
 
+    // 跟随 Obsidian 主题：暗色/亮色切换时重读 CSS 变量
+    const refreshPalette = () => {
+      const p2 = {
+        bg: cssVar('--background-primary', '#ffffff'),
+        text: cssVar('--text-normal', '#333333'),
+        edge: cssVar('--background-modifier-border', 'rgba(120,130,150,.45)'),
+        accent: cssVar('--interactive-accent', '#6b8afd'),
+        muted: cssVar('--text-faint', '#8892a0')
+      };
+      Object.assign(this.palette, p2);
+      if (this.renderer && this.renderer.setPalette) this.renderer.setPalette(p2);
+    };
+    if (this.plugin && this.plugin.app && this.plugin.app.workspace) {
+      const ref = this.plugin.app.workspace.on('css-change', refreshPalette);
+      this.disposers.push(() => { try { this.plugin.app.workspace.offref(ref); } catch (e) { } });
+    }
+
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => { if (this.renderer) this.renderer.resize(); });
       ro.observe(info);
@@ -1821,7 +1904,7 @@ class MatrixGraphPlugin extends Plugin {
       ctx.addChild(new MatrixGraphBlock(this, el, source, ctx));
     });
 
-    this.addRibbonIcon('git-fork', '打开矩阵图谱（当前笔记）', () => this.openViewFromActive());
+    this.addRibbonIcon('git-fork', '新建矩阵图谱笔记', () => this.createMatrixNote());
 
     this.addCommand({
       id: 'open-matrix-table-view',
@@ -1873,6 +1956,45 @@ class MatrixGraphPlugin extends Plugin {
       view.extraOpts = extraOpts || null;
       await view.render();
     }
+  }
+
+  /* 新建一个独立笔记，内含 matrix-graph 代码块；可在其它笔记里用 ![[文件名]] 嵌入，渲染与行内一致 */
+  async createMatrixNote() {
+    const folder = this.app.workspace.getActiveFile()
+      ? (this.app.workspace.getActiveFile().parent ? this.app.workspace.getActiveFile().parent.path : '')
+      : '';
+    let base = '矩阵图谱';
+    let path = (folder ? folder + '/' : '') + base + '.md';
+    let i = 1;
+    while (this.app.vault.getAbstractFileByPath(path)) {
+      path = (folder ? folder + '/' : '') + base + ' ' + (++i) + '.md';
+    }
+    const body = [
+      '---',
+      'tags:',
+      '  - matrix-graph',
+      '---',
+      '',
+      '# 矩阵图谱',
+      '',
+      '> 这个笔记里的 matrix-graph 代码块可以直接编辑；也可以在其它笔记里用 ![[文件名]] 嵌入，渲染效果与行内图谱一致。',
+      '',
+      '```matrix-graph',
+      'mode: similar',
+      'height: 560',
+      'threshold: 2',
+      '| 元素 | 体系A | 体系B | 体系C |',
+      '|---|---|---|---|',
+      '| 项目1 | ✓ |  | ✓ |',
+      '| 项目2 |  | ✓ | ✓ |',
+      '| 项目3 | ✓ |  |  |',
+      '```',
+      ''
+    ].join('\n');
+    const file = await this.app.vault.create(path, body);
+    await this.app.workspace.getLeaf(true).openFile(file);
+    new Notice('已创建 ' + file.basename);
+    return file;
   }
 
   async openMatrix(source, sourcePath, title) {

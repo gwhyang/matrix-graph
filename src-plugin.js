@@ -343,6 +343,23 @@ class MatrixGraphMount {
       this.plugin.openView(this.source, this.sourcePath, this.opts.tagLabel + ' × ' + this.opts.elementLabel, this.opts);
     });
 
+    // 跟随 Obsidian 主题：暗色/亮色切换时重读 CSS 变量
+    const refreshPalette = () => {
+      const p2 = {
+        bg: cssVar('--background-primary', '#ffffff'),
+        text: cssVar('--text-normal', '#333333'),
+        edge: cssVar('--background-modifier-border', 'rgba(120,130,150,.45)'),
+        accent: cssVar('--interactive-accent', '#6b8afd'),
+        muted: cssVar('--text-faint', '#8892a0')
+      };
+      Object.assign(this.palette, p2);
+      if (this.renderer && this.renderer.setPalette) this.renderer.setPalette(p2);
+    };
+    if (this.plugin && this.plugin.app && this.plugin.app.workspace) {
+      const ref = this.plugin.app.workspace.on('css-change', refreshPalette);
+      this.disposers.push(() => { try { this.plugin.app.workspace.offref(ref); } catch (e) { } });
+    }
+
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => { if (this.renderer) this.renderer.resize(); });
       ro.observe(info);
@@ -688,7 +705,7 @@ class MatrixGraphPlugin extends Plugin {
       ctx.addChild(new MatrixGraphBlock(this, el, source, ctx));
     });
 
-    this.addRibbonIcon('git-fork', '打开矩阵图谱（当前笔记）', () => this.openViewFromActive());
+    this.addRibbonIcon('git-fork', '新建矩阵图谱笔记', () => this.createMatrixNote());
 
     this.addCommand({
       id: 'open-matrix-table-view',
@@ -740,6 +757,45 @@ class MatrixGraphPlugin extends Plugin {
       view.extraOpts = extraOpts || null;
       await view.render();
     }
+  }
+
+  /* 新建一个独立笔记，内含 matrix-graph 代码块；可在其它笔记里用 ![[文件名]] 嵌入，渲染与行内一致 */
+  async createMatrixNote() {
+    const folder = this.app.workspace.getActiveFile()
+      ? (this.app.workspace.getActiveFile().parent ? this.app.workspace.getActiveFile().parent.path : '')
+      : '';
+    let base = '矩阵图谱';
+    let path = (folder ? folder + '/' : '') + base + '.md';
+    let i = 1;
+    while (this.app.vault.getAbstractFileByPath(path)) {
+      path = (folder ? folder + '/' : '') + base + ' ' + (++i) + '.md';
+    }
+    const body = [
+      '---',
+      'tags:',
+      '  - matrix-graph',
+      '---',
+      '',
+      '# 矩阵图谱',
+      '',
+      '> 这个笔记里的 matrix-graph 代码块可以直接编辑；也可以在其它笔记里用 ![[文件名]] 嵌入，渲染效果与行内图谱一致。',
+      '',
+      '```matrix-graph',
+      'mode: similar',
+      'height: 560',
+      'threshold: 2',
+      '| 元素 | 体系A | 体系B | 体系C |',
+      '|---|---|---|---|',
+      '| 项目1 | ✓ |  | ✓ |',
+      '| 项目2 |  | ✓ | ✓ |',
+      '| 项目3 | ✓ |  |  |',
+      '```',
+      ''
+    ].join('\n');
+    const file = await this.app.vault.create(path, body);
+    await this.app.workspace.getLeaf(true).openFile(file);
+    new Notice('已创建 ' + file.basename);
+    return file;
   }
 
   async openMatrix(source, sourcePath, title) {
